@@ -120,7 +120,7 @@ go test ./...
 
 ## Building OpenZL
 
-The OpenZL library must be built as a shared library before using the Go bindings:
+The OpenZL  library must be built as a shared library before using the Go bindings:
 
 ```bash
 # Build OpenZL (creates libopenzl.so/.dylib)

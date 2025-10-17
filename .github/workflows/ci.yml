@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  GO_VERSION: '1.21'
+  OPENZL_VERSION: 'main'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go-version: ['1.21', '1.22']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential cmake ninja-build llvm-dev libclang-dev
+
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install cmake ninja llvm
+
+    - name: Verify installations
+      run: |
+        go version
+        cmake --version
+        ninja --version
+        clang --version
+
+    - name: Build OpenZL
+      run: |
+        chmod +x scripts/build-openzl.sh
+        ./scripts/build-openzl.sh
+
+    - name: Verify OpenZL build
+      run: |
+        ls -la third_party/openzl/build/libopenzl.* || echo "No shared library found"
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Run tests with race detection
+      run: go test -race ./...
+
+    - name: Build examples
+      run: |
+        cd examples/hello
+        go build -o hello main.go
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: openzl-lib-${{ matrix.os }}-go${{ matrix.go-version }}
+        path: |
+          third_party/openzl/build/libopenzl.*
+          examples/hello/hello
+        retention-days: 7
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        args: --timeout=5m
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Run Gosec Security Scanner
+      uses: securecodewarrior/github-action-gosec@master
+      with:
+        args: '-fmt sarif -out gosec.sarif ./...'
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: gosec.sarif
+
+  build-release:
+    name: Build Release Binaries
+    runs-on: ${{ matrix.os }}
+    needs: [test, lint, security]
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go-version: ['1.21']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Install dependencies
+      run: |
+        if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+          sudo apt update
+          sudo apt install -y build-essential cmake ninja-build llvm-dev libclang-dev
+        else
+          brew install cmake ninja llvm
+        fi
+
+    - name: Build OpenZL
+      run: |
+        chmod +x scripts/build-openzl.sh
+        ./scripts/build-openzl.sh
+
+    - name: Build all examples
+      run: |
+        cd examples/hello
+        go build -ldflags="-s -w" -o hello main.go
+
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-${{ matrix.os }}
+        path: |
+          third_party/openzl/build/libopenzl.*
+          examples/hello/hello
+        retention-days: 30

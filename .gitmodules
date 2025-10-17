@@ -1,0 +1,4 @@
+[submodule "third_party/openzl"]
+	path = third_party/openzl
+	url = https://github.com/facebook/openzl.git
+	branch = main

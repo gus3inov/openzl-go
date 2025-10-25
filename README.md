@@ -186,19 +186,6 @@ for _, data := range datasets {
 
 **Note**: Contexts are not thread-safe. Each goroutine should use its own context instance.
 
-## Project Status
-
-### ✅ Completed (v0.1.0)
-- [x] Basic project structure
-- [x] Core compression API bindings
-- [x] Basic example application
-- [x] CI/CD pipeline
-- [x] Comprehensive test suite
-- [x] Performance benchmarks
-- [x] Go documentation
-- [x] Error handling
-- [x] Memory management
-
 ### 🚧 Future Roadmap
 
 #### Phase 2: Enhanced Features
@@ -253,33 +240,9 @@ If you modify C headers or need to regenerate bindings:
 # Regenerate cgo bindings (if needed)
 go generate ./...
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite: `go test ./...`
-6. Commit your changes: `git commit -am 'Add feature'`
-7. Push to the branch: `git push origin feature-name`
-8. Submit a pull request
-
-## Disclaimers
-
-- **API Stability**: This project is in early development. APIs may change between versions.
-- **Platform Support**: Currently supports macOS and Linux. Windows support is planned.
-- **Performance**: cgo overhead may impact performance for high-frequency operations.
-- **Dependencies**: Requires OpenZL to be built from source (no prebuilt binaries yet).
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [Facebook OpenZL](https://github.com/facebook/openzl) - The underlying compression library
-- [Go cgo documentation](https://pkg.go.dev/cmd/cgo) - For cgo implementation guidance
 
 ## Links
 

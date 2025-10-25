@@ -17,29 +17,6 @@
 # Go workspace file
 go.work
 
-# Build artifacts
-build/
-dist/
-bin/
-
-# OpenZL build artifacts
-third_party/openzl/build/
-third_party/openzl/install/
-
-# C/C++ build artifacts
-*.o
-*.a
-*.so
-*.dylib
-*.dll
-*.exe
-
-# CMake build directories
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-Makefile
-
 # IDE files
 .vscode/
 .idea/
@@ -56,36 +33,20 @@ Makefile
 ehthumbs.db
 Thumbs.db
 
-# Temporary files
-*.tmp
-*.temp
-*.log
+# Build artifacts
+build/
+dist/
+*.tar.gz
+*.zip
 
-# Coverage reports
-coverage.out
-coverage.html
-
-# Profiling data
-*.prof
-*.pprof
-
-# Air (live reload) temporary files
-tmp/
+# OpenZL build artifacts
+third_party/openzl/build/
+third_party/openzl/install/
 
 # Example binaries
+examples/hello/hello
 examples/*/hello
-examples/*/example
-examples/*/demo
 
-# Test data
-testdata/
-*.testdata
-
-# Local environment files
-.env
-.env.local
-.env.*.local
-
-# Backup files
-*.bak
-*.backup
+# Coverage files
+coverage.out
+coverage.html

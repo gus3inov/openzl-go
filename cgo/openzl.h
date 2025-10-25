@@ -3,6 +3,7 @@
 #define OPENZL_H
 
 #include "openzl/openzl.h"
+#include "openzl/zl_compressor.h"
 #include <stdlib.h>
 
 // C wrapper function declarations

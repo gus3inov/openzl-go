@@ -19,7 +19,7 @@ openzl_context_t* openzl_context_create() {
         return NULL;
     }
     
-    // Set default compression parameters
+    // Set default compression parameters on the context
     unsigned defaultVersion = ZL_getDefaultEncodingVersion();
     ZL_Report result = ZL_CCtx_setParameter(ctx->cctx, ZL_CParam_formatVersion, (int)defaultVersion);
     if (ZL_isError(result)) {
@@ -81,7 +81,8 @@ long long openzl_decompress(openzl_context_t* ctx,
         return -1; // Invalid context
     }
     
-    ZL_Report result = ZL_DCtx_decompress(ctx->dctx, dst, dst_capacity, src, src_size);
+    // Use the simple decompression API instead of the context-based one
+    ZL_Report result = ZL_decompress(dst, dst_capacity, src, src_size);
     
     if (ZL_isError(result)) {
         return -(long long)ZL_errorCode(result); // Return negative error code

@@ -93,30 +93,28 @@ func OpenZLDecompress(ctx *OpenZLContext, data []byte) ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	// For now, we'll allocate a buffer that's 4x the compressed size.
-	// In a production implementation, you might want to get the actual 
-	// decompressed size first using ZL_getDecompressedSize
-	maxDecompressedSize := len(data) * 4
-	if maxDecompressedSize < 1024 {
-		maxDecompressedSize = 1024 // Minimum buffer size
+	// First, get the decompressed size
+	sizeResult := C.ZL_getDecompressedSize(unsafe.Pointer(&data[0]), C.size_t(len(data)))
+	if C.ZL_isError(sizeResult) != 0 {
+		return nil, fmt.Errorf("failed to get decompressed size: error code %d", C.ZL_errorCode(sizeResult))
 	}
 
-	decompressed := make([]byte, maxDecompressedSize)
+	decompressedSize := int(C.ZL_validResult(sizeResult))
+	decompressed := make([]byte, decompressedSize)
 
-	// Call the C function
-	result := C.openzl_decompress(
-		ctx.ctx,
+	// Call the simple decompression function
+	result := C.ZL_decompress(
 		unsafe.Pointer(&decompressed[0]),
 		C.size_t(len(decompressed)),
 		unsafe.Pointer(&data[0]),
 		C.size_t(len(data)),
 	)
 
-	if result < 0 {
-		return nil, fmt.Errorf("decompression failed with error code %d", -result)
+	if C.ZL_isError(result) != 0 {
+		return nil, fmt.Errorf("decompression failed with error code %d", C.ZL_errorCode(result))
 	}
 
 	// Return the actual decompressed data (truncated to actual size)
-	actualSize := int(result)
+	actualSize := int(C.ZL_validResult(result))
 	return decompressed[:actualSize], nil
 }

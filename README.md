@@ -132,6 +132,8 @@ ls -la third_party/openzl/build/libopenzl.*
 
 ## Usage
 
+### Basic Compression
+
 ```go
 package main
 
@@ -155,10 +157,34 @@ func main() {
         panic(err)
     }
 
-    fmt.Printf("Compressed %d bytes to %d bytes\n", 
+    fmt.Printf("Compressed %d bytes to %d bytes\n",
         len(data), len(compressed))
 }
 ```
+
+### Context Reuse (Recommended)
+
+**Important**: Contexts can and should be reused for better performance. Reusing a context
+improves performance by approximately **27%** compared to creating a new context for each operation.
+
+```go
+ctx, err := openzl.NewContext()
+if err != nil {
+    panic(err)
+}
+defer ctx.Close()
+
+// Reuse the same context for multiple operations
+for _, data := range datasets {
+    compressed, err := ctx.Compress(data)
+    if err != nil {
+        panic(err)
+    }
+    // Process compressed data...
+}
+```
+
+**Note**: Contexts are not thread-safe. Each goroutine should use its own context instance.
 
 ## Project Status
 

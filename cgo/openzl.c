@@ -4,7 +4,6 @@
 // C wrapper implementations for OpenZL Go bindings
 #include "openzl.h"
 
-// Initialize a new OpenZL context
 openzl_context_t* openzl_context_create() {
     openzl_context_t* ctx = (openzl_context_t*)malloc(sizeof(openzl_context_t));
     if (ctx == NULL) {
@@ -18,26 +17,37 @@ openzl_context_t* openzl_context_create() {
         openzl_context_free(ctx);
         return NULL;
     }
-    
-    // Set default compression parameters on the context
-    unsigned defaultVersion = ZL_getDefaultEncodingVersion();
-    ZL_Report result = ZL_CCtx_setParameter(ctx->cctx, ZL_CParam_formatVersion, (int)defaultVersion);
+
+    // Enable sticky parameters to allow context reuse across multiple operations
+    ZL_Report result = ZL_CCtx_setParameter(ctx->cctx, ZL_CParam_stickyParameters, 1);
     if (ZL_isError(result)) {
         openzl_context_free(ctx);
         return NULL;
     }
-    
-    // Set default compression level
+
+    result = ZL_DCtx_setParameter(ctx->dctx, ZL_DParam_stickyParameters, 1);
+    if (ZL_isError(result)) {
+        openzl_context_free(ctx);
+        return NULL;
+    }
+
+    // Set default compression parameters
+    unsigned defaultVersion = ZL_getDefaultEncodingVersion();
+    result = ZL_CCtx_setParameter(ctx->cctx, ZL_CParam_formatVersion, (int)defaultVersion);
+    if (ZL_isError(result)) {
+        openzl_context_free(ctx);
+        return NULL;
+    }
+
     result = ZL_CCtx_setParameter(ctx->cctx, ZL_CParam_compressionLevel, ZL_COMPRESSIONLEVEL_DEFAULT);
     if (ZL_isError(result)) {
         openzl_context_free(ctx);
         return NULL;
     }
-    
+
     return ctx;
 }
 
-// Free an OpenZL context
 void openzl_context_free(openzl_context_t* ctx) {
     if (ctx == NULL) {
         return;
@@ -54,44 +64,38 @@ void openzl_context_free(openzl_context_t* ctx) {
     free(ctx);
 }
 
-// Compress data
-// Returns the compressed size on success, or a negative error code on failure
 long long openzl_compress(openzl_context_t* ctx, 
                          void* dst, size_t dst_capacity,
                          const void* src, size_t src_size) {
     if (ctx == NULL || ctx->cctx == NULL) {
-        return -1; // Invalid context
+        return -1;
     }
     
     ZL_Report result = ZL_CCtx_compress(ctx->cctx, dst, dst_capacity, src, src_size);
     
     if (ZL_isError(result)) {
-        return -(long long)ZL_errorCode(result); // Return negative error code
+        return -(long long)ZL_errorCode(result);
     }
     
-    return (long long)ZL_validResult(result); // Return compressed size
+    return (long long)ZL_validResult(result);
 }
 
-// Decompress data
-// Returns the decompressed size on success, or a negative error code on failure
 long long openzl_decompress(openzl_context_t* ctx,
                            void* dst, size_t dst_capacity, 
                            const void* src, size_t src_size) {
     if (ctx == NULL || ctx->dctx == NULL) {
-        return -1; // Invalid context
+        return -1;
     }
     
-    // Use the simple decompression API instead of the context-based one
     ZL_Report result = ZL_decompress(dst, dst_capacity, src, src_size);
     
     if (ZL_isError(result)) {
-        return -(long long)ZL_errorCode(result); // Return negative error code
+        return -(long long)ZL_errorCode(result);
     }
     
-    return (long long)ZL_validResult(result); // Return decompressed size
+    return (long long)ZL_validResult(result);
 }
 
-// Get the maximum size needed for compression output
 size_t openzl_compress_bound(size_t src_size) {
     return ZL_compressBound(src_size);
 }

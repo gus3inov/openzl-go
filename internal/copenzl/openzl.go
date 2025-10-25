@@ -19,12 +19,10 @@ import (
 	"unsafe"
 )
 
-// OpenZLContext represents a C OpenZL context.
 type OpenZLContext struct {
 	ctx *C.openzl_context_t
 }
 
-// NewOpenZLContext creates a new OpenZL context.
 func NewOpenZLContext() (*OpenZLContext, error) {
 	ctx := C.openzl_context_create()
 	if ctx == nil {
@@ -33,7 +31,6 @@ func NewOpenZLContext() (*OpenZLContext, error) {
 	return &OpenZLContext{ctx: ctx}, nil
 }
 
-// Close frees the OpenZL context.
 func (c *OpenZLContext) Close() {
 	if c.ctx != nil {
 		C.openzl_context_free(c.ctx)
@@ -41,7 +38,6 @@ func (c *OpenZLContext) Close() {
 	}
 }
 
-// OpenZLCompress compresses data using the C API.
 func OpenZLCompress(ctx *OpenZLContext, data []byte) ([]byte, error) {
 	if ctx == nil || ctx.ctx == nil {
 		return nil, errors.New("invalid context")
@@ -51,7 +47,6 @@ func OpenZLCompress(ctx *OpenZLContext, data []byte) ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	// Calculate maximum compressed size
 	maxCompressedSize := C.openzl_compress_bound(C.size_t(len(data)))
 	compressed := make([]byte, maxCompressedSize)
 
@@ -93,7 +88,6 @@ func OpenZLDecompress(ctx *OpenZLContext, data []byte) ([]byte, error) {
 		return []byte{}, nil
 	}
 
-	// First, get the decompressed size
 	sizeResult := C.ZL_getDecompressedSize(unsafe.Pointer(&data[0]), C.size_t(len(data)))
 	if C.ZL_isError(sizeResult) != 0 {
 		return nil, fmt.Errorf("failed to get decompressed size: error code %d", C.ZL_errorCode(sizeResult))
@@ -102,7 +96,6 @@ func OpenZLDecompress(ctx *OpenZLContext, data []byte) ([]byte, error) {
 	decompressedSize := int(C.ZL_validResult(sizeResult))
 	decompressed := make([]byte, decompressedSize)
 
-	// Call the simple decompression function
 	result := C.ZL_decompress(
 		unsafe.Pointer(&decompressed[0]),
 		C.size_t(len(decompressed)),
@@ -114,7 +107,6 @@ func OpenZLDecompress(ctx *OpenZLContext, data []byte) ([]byte, error) {
 		return nil, fmt.Errorf("decompression failed with error code %d", C.ZL_errorCode(result))
 	}
 
-	// Return the actual decompressed data (truncated to actual size)
 	actualSize := int(C.ZL_validResult(result))
 	return decompressed[:actualSize], nil
 }

@@ -21,7 +21,6 @@ import (
 func main() {
 	fmt.Println("OpenZL Go Bindings - Hello World Example")
 
-	// Initialize OpenZL context
 	ctx, err := openzl.NewContext()
 	if err != nil {
 		log.Fatalf("Failed to initialize OpenZL context: %v", err)
@@ -30,7 +29,6 @@ func main() {
 
 	fmt.Println("✓ Successfully initialized OpenZL context")
 
-	// Test data
 	testData := []byte("Hello, OpenZL!")
 	fmt.Printf("Original data: %s (%d bytes)\n", string(testData), len(testData))
 

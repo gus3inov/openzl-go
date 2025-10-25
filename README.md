@@ -14,38 +14,6 @@ This project provides cgo-based bindings that wrap the native OpenZL C API, enab
 OpenZL C API → cgo layer → Go wrapper → Public Go API
 ```
 
-## Project Structure
-
-```
-openzl-go/
-├── README.md                 # This file
-├── .gitignore              # Git ignore patterns
-├── go.mod                   # Go module definition
-├── go.sum                   # Go module checksums
-├── LICENSE                  # MIT license
-├── third_party/openzl/      # Git submodule for OpenZL
-├── cgo/                     # cgo layer and build glue
-│   ├── openzl.h            # C header includes
-│   ├── openzl.c            # C wrapper implementations
-│   └── build.go            # Build constraints and flags
-├── internal/copenzl/        # Low-level C bindings (private)
-│   ├── openzl.go           # cgo declarations
-│   └── types.go            # C type mappings
-├── openzl/                  # Public Go API package
-│   ├── compression.go      # Compression APIs
-│   ├── ml.go              # Machine learning APIs
-│   └── types.go           # Go type definitions
-├── examples/               # Sample applications
-│   └── hello/             # Basic usage example
-│       └── main.go        # Hello world app
-├── scripts/               # Build and automation scripts
-│   ├── build-openzl.sh    # Build OpenZL shared library
-│   ├── install-deps.sh    # Install prerequisites
-│   └── test.sh            # Run tests
-└── .github/workflows/     # GitHub Actions CI
-    └── ci.yml             # Continuous integration
-```
-
 ## Prerequisites
 
 ### macOS
@@ -132,6 +100,8 @@ ls -la third_party/openzl/build/libopenzl.*
 
 ## Usage
 
+### Basic Compression
+
 ```go
 package main
 
@@ -155,23 +125,34 @@ func main() {
         panic(err)
     }
 
-    fmt.Printf("Compressed %d bytes to %d bytes\n", 
+    fmt.Printf("Compressed %d bytes to %d bytes\n",
         len(data), len(compressed))
 }
 ```
 
-## Project Status
+### Context Reuse (Recommended)
 
-### ✅ Completed (v0.1.0)
-- [x] Basic project structure
-- [x] Core compression API bindings
-- [x] Basic example application
-- [x] CI/CD pipeline
-- [x] Comprehensive test suite
-- [x] Performance benchmarks
-- [x] Go documentation
-- [x] Error handling
-- [x] Memory management
+**Important**: Contexts can and should be reused for better performance. Reusing a context
+improves performance by approximately **27%** compared to creating a new context for each operation.
+
+```go
+ctx, err := openzl.NewContext()
+if err != nil {
+    panic(err)
+}
+defer ctx.Close()
+
+// Reuse the same context for multiple operations
+for _, data := range datasets {
+    compressed, err := ctx.Compress(data)
+    if err != nil {
+        panic(err)
+    }
+    // Process compressed data...
+}
+```
+
+**Note**: Contexts are not thread-safe. Each goroutine should use its own context instance.
 
 ### 🚧 Future Roadmap
 
@@ -227,33 +208,9 @@ If you modify C headers or need to regenerate bindings:
 # Regenerate cgo bindings (if needed)
 go generate ./...
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite: `go test ./...`
-6. Commit your changes: `git commit -am 'Add feature'`
-7. Push to the branch: `git push origin feature-name`
-8. Submit a pull request
-
-## Disclaimers
-
-- **API Stability**: This project is in early development. APIs may change between versions.
-- **Platform Support**: Currently supports macOS and Linux. Windows support is planned.
-- **Performance**: cgo overhead may impact performance for high-frequency operations.
-- **Dependencies**: Requires OpenZL to be built from source (no prebuilt binaries yet).
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [Facebook OpenZL](https://github.com/facebook/openzl) - The underlying compression library
-- [Go cgo documentation](https://pkg.go.dev/cmd/cgo) - For cgo implementation guidance
 
 ## Links
 

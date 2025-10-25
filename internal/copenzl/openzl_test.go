@@ -151,20 +151,19 @@ func TestOpenZLDecompressNilData(t *testing.T) {
 }
 
 func BenchmarkOpenZLCompress(b *testing.B) {
+	ctx, err := NewOpenZLContext()
+	if err != nil {
+		b.Fatalf("NewOpenZLContext() failed: %v", err)
+	}
+	defer ctx.Close()
+
 	data := bytes.Repeat([]byte("Benchmark test data for OpenZL compression performance testing. "), 1000)
 
 	b.ResetTimer()
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		ctx, err := NewOpenZLContext()
-		if err != nil {
-			b.Fatalf("NewOpenZLContext() failed: %v", err)
-		}
-
-		_, err = OpenZLCompress(ctx, data)
-		ctx.Close()
-
+		_, err := OpenZLCompress(ctx, data)
 		if err != nil {
 			b.Fatalf("OpenZLCompress() failed: %v", err)
 		}
@@ -172,14 +171,14 @@ func BenchmarkOpenZLCompress(b *testing.B) {
 }
 
 func BenchmarkOpenZLDecompress(b *testing.B) {
-	// Pre-compress the data once
 	ctx, err := NewOpenZLContext()
 	if err != nil {
 		b.Fatalf("NewOpenZLContext() failed: %v", err)
 	}
+	defer ctx.Close()
+
 	data := bytes.Repeat([]byte("Benchmark test data for OpenZL decompression performance testing. "), 1000)
 	compressed, err := OpenZLCompress(ctx, data)
-	ctx.Close()
 	if err != nil {
 		b.Fatalf("OpenZLCompress() failed: %v", err)
 	}
@@ -188,14 +187,7 @@ func BenchmarkOpenZLDecompress(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		ctx, err := NewOpenZLContext()
-		if err != nil {
-			b.Fatalf("NewOpenZLContext() failed: %v", err)
-		}
-
-		_, err = OpenZLDecompress(ctx, compressed)
-		ctx.Close()
-
+		_, err := OpenZLDecompress(ctx, compressed)
 		if err != nil {
 			b.Fatalf("OpenZLDecompress() failed: %v", err)
 		}

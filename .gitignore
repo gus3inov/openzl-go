@@ -23,6 +23,7 @@ go.work
 *.swp
 *.swo
 *~
+CLAUDE.md
 
 # OS generated files
 .DS_Store
